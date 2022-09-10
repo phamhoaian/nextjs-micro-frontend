@@ -1,0 +1,13 @@
+.container {
+  margin: 0 auto;
+  max-width: 90%;
+  padding: 4rem 0;
+  @media screen and (min-width: 567px) {
+    max-width: 50rem;
+  }
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+}
