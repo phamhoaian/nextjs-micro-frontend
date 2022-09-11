@@ -1,46 +1,56 @@
-const {
-  withModuleFederation,
-} = require("@module-federation/nextjs-mf");
+const { withFederatedSidecar } = require("@module-federation/nextjs-mf");
 const deps = require("./package.json").dependencies;
+
+module.exports = withFederatedSidecar({
+  name: "next2",
+  filename: "static/chunks/remoteMovieEntry.js",
+  exposes: {
+    "./movieList": "./components/MovieList",
+  },
+  shared: {
+    react: {
+      singleton: true,
+      requiredVersion: deps.react
+    },
+    "react-dom": {
+      singleton: true,
+      requiredVersion: deps["react-dom"]
+    },
+    "query-string": {
+      singleton: true,
+      requiredVersion: deps["query-string"]
+    },
+    "react-query": {
+      singleton: true,
+      requiredVersion: deps["react-query"]
+    }
+  },
+})({
+  // your original next.config.js export
+});
 module.exports = {
   future: { webpack5: true },
   webpack: (config, options) => {
-    const mfConf = {
-      mergeRuntime: true, //experimental
-      name: "movies",
-      library: {
-        type: config.output.libraryTarget,
-        name: "movies",
-      },
-      filename: "static/chunks/remoteMovieEntry.js",
-      remotes: {
-      },
-      exposes: {
-        "./movieList": "./components/MovieList",
-      },
-      shared: {
-        ...deps,
-        react: {
-          singleton: true,
-          requiredVersion: deps.react
+    config.plugins.push(
+      new options.webpack.container.ModuleFederationPlugin({
+        remoteType: "var",
+        remotes: {
+          next2: "next2",
         },
-        "react-dom": {
-          singleton: true,
-          requiredVersion: deps["react-dom"]
+        shared: {
+          react: {
+            // Notice shared ARE eager here.
+            eager: true,
+            singleton: true,
+            requiredVersion: false,
+          }
         },
-        "query-string": {
-          singleton: true,
-          requiredVersion: deps["query-string"]
-        },
-        "react-query": {
-          singleton: true,
-          requiredVersion: deps["react-query"]
-        }
-      },
-    };
-    config.cache = false;
-    withModuleFederation(config, options, mfConf);
-
+      })
+    );
+    config.module.rules.push({
+      test: /_app.js/,
+      loader: "@module-federation/nextjs-mf/lib/federation-loader.js",
+    });
     return config;
   },
 
