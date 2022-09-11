@@ -1,37 +1,52 @@
-/** @type {import('next').NextConfig} */
-const nextConfig = {
-  reactStrictMode: true,
-  swcMinify: true,
-  webpack: (config, options) => { // webpack configurations
-    config.plugins.push(
-      new options.webpack.container.ModuleFederationPlugin({
-        name:"remote_movies",
-        filename: "static/chunks/remoteEntry.js", // remote file name which will used later
-        remoteType: "var",
-        exposes: { // expose all component here.
-          "./movieList": "./pages/index.tsx",
-          "./movieDetail": "./pages/movie/[id].tsx"
+const {
+  withModuleFederation,
+} = require("@module-federation/nextjs-mf");
+const deps = require("./package.json").dependencies;
+module.exports = {
+  future: { webpack5: true },
+  webpack: (config, options) => {
+    const mfConf = {
+      mergeRuntime: true, //experimental
+      name: "movies",
+      library: {
+        type: config.output.libraryTarget,
+        name: "movies",
+      },
+      filename: "static/chunks/remoteMovieEntry.js",
+      remotes: {
+      },
+      exposes: {
+        "./movieList": "./components/MovieList",
+      },
+      shared: {
+        ...deps,
+        react: {
+          singleton: true,
+          requiredVersion: deps.react
         },
-        shared: [
-          {
-            react: {
-              eager: true,
-              singleton: true,
-              requiredVersion: false,
-            }
-          },
-          {
-            "react-dom": {
-              eager: true,
-              singleton: true,
-              requiredVersion: false,
-            }
-          },
-        ]
-      })
-    )
-    return config
-  }
-}
+        "react-dom": {
+          singleton: true,
+          requiredVersion: deps["react-dom"]
+        },
+        "query-string": {
+          singleton: true,
+          requiredVersion: deps["query-string"]
+        },
+        "react-query": {
+          singleton: true,
+          requiredVersion: deps["react-query"]
+        }
+      },
+    };
+    config.cache = false;
+    withModuleFederation(config, options, mfConf);
 
-module.exports = nextConfig
+    return config;
+  },
+
+  webpackDevMiddleware: (config) => {
+    // Perform customizations to webpack dev middleware config
+    // Important: return the modified config
+    return config;
+  },
+};

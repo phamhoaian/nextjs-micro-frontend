@@ -1,7 +1,6 @@
 import React from 'react'
-import Link from 'next/link'
 import { Movie } from '../../types/movie'
-import styles from './Movie.module.scss'
+import styles from '../../styles/Movie.module.scss'
 
 const MovieItem: React.FC<{ item: Movie }> = ({ item }) => {
   return (
@@ -18,9 +17,7 @@ const MovieItem: React.FC<{ item: Movie }> = ({ item }) => {
         />
       </div>
       <div className={styles.content}>
-        <h3 className={styles.title}>
-          <Link href={'/movie/' + item._id}>{item.title}</Link>
-        </h3>
+        <h3 className={styles.title}>{item.title}</h3>
         <div className={styles.description}>
           Description:<br/>
           {item.description}
